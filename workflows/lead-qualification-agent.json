@@ -1,0 +1,936 @@
+{
+  "id": "VntLeadQualAgnt1",
+  "name": "Vantora · Inbound Lead Qualification Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 1 · Intake & validation\nWebhook receives the demo request, validates it, and answers the form instantly.",
+        "width": 760,
+        "height": 520,
+        "color": 7
+      },
+      "id": "1cc0f21a-e4d8-4a0d-bafc-a370e8e1da0d",
+      "name": "Note 04924a",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2 · Enrichment\nFetch the company homepage and reduce it to clean text. Unreachable sites fall through gracefully.",
+        "width": 520,
+        "height": 520,
+        "color": 5
+      },
+      "id": "fbc0eef8-e55a-45c0-b567-e290c21961af",
+      "name": "Note a08e0f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        680,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3 · AI qualification (Gemini)\nSchema-enforced JSON verdict: ICP score, tier, signals, risks and a first-touch email. Retries 3x, then hands the same prompt to a second provider (Groq) if the primary is down. Providers are swappable (Gemini / Groq / Claude / OpenAI).",
+        "width": 760,
+        "height": 520,
+        "color": 6
+      },
+      "id": "569ba023-e771-4789-b482-3fd92a29400d",
+      "name": "Note 0a1900",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 4 · Routing & actions\nScore ≥ 70: CRM row + personalized Gmail draft for the sales rep. Otherwise: nurture list.",
+        "width": 760,
+        "height": 760,
+        "color": 4
+      },
+      "id": "b76e42e1-1d5f-49ad-a979-79d0109f02c9",
+      "name": "Note f3c44f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "d58dad81-61ae-4424-9c29-c43d0a822eaf",
+      "name": "Demo Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "51513b52-60b8-4a13-811d-53a19a929939"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and normalize the inbound form payload.\nconst b = $input.first().json.body ?? {};\nconst required = ['first_name', 'last_name', 'email', 'company', 'website', 'job_title', 'company_size', 'timeline'];\nconst errors = required.filter((k) => !String(b[k] ?? '').trim()).map((k) => `${k} is required`);\n\nconst email = String(b.email ?? '').trim().toLowerCase();\nif (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) errors.push('email is invalid');\n\nconst website = String(b.website ?? '').trim().toLowerCase()\n  .replace(/^https?:\\/\\//, '').replace(/^www\\./, '').replace(/\\/.*$/, '');\n\nconst FREE_DOMAINS = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'aol.com', 'proton.me', 'protonmail.com'];\nconst emailDomain = email.split('@')[1] ?? '';\n\nconst leadId = 'VNT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    lead_id: leadId,\n    first_name: String(b.first_name ?? '').trim(),\n    last_name: String(b.last_name ?? '').trim(),\n    full_name: `${String(b.first_name ?? '').trim()} ${String(b.last_name ?? '').trim()}`.trim(),\n    email,\n    email_domain: emailDomain,\n    is_free_email: FREE_DOMAINS.includes(emailDomain),\n    domain_matches_website: emailDomain !== '' && website.endsWith(emailDomain),\n    company: String(b.company ?? '').trim(),\n    website,\n    job_title: String(b.job_title ?? '').trim(),\n    company_size: b.company_size ?? '',\n    crm: b.crm ?? 'Not specified',\n    timeline: b.timeline ?? '',\n    message: String(b.message ?? '').trim(),\n    source: b.source ?? 'unknown',\n    submitted_at: b.submitted_at ?? new Date().toISOString(),\n  },\n}];"
+      },
+      "id": "d79d7e8a-799b-4d6b-b4a5-1df9057edfbb",
+      "name": "Validate & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "3c3ea89d-8cbe-4caa-80b2-682cc9b1b077",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7d6127dd-f57a-4095-8f60-1c5c04a71394",
+      "name": "Payload Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'invalid', errors: $json.errors } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "20c0c64b-e99d-4cfb-9975-60f574882902",
+      "name": "Respond 400 · Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'received', lead_id: $json.lead_id } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "588ee6b1-574d-4763-82f7-617a79a996ff",
+      "name": "Respond 200 · Received",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $('Validate & Normalize').first().json.website }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (compatible; VantoraLeadBot/1.0)"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "fcb72a12-2211-44cd-90c2-61bd1410603f",
+      "name": "Fetch Company Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn the fetched homepage HTML into compact plain text for the LLM.\nconst lead = $('Validate & Normalize').first().json;\nconst res = $input.first().json;\nconst html = typeof res.data === 'string' ? res.data : '';\n\nconst pick = (re) => (html.match(re)?.[1] ?? '').replace(/\\s+/g, ' ').trim();\nconst title = pick(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst description = pick(/<meta[^>]+name=[\"']description[\"'][^>]+content=[\"']([^\"']*)[\"']/i)\n  || pick(/<meta[^>]+property=[\"']og:description[\"'][^>]+content=[\"']([^\"']*)[\"']/i);\n\nconst text = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;|&#160;/g, ' ')\n  .replace(/&amp;/g, '&')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .slice(0, 6000);\n\nreturn [{\n  json: {\n    ...lead,\n    website_reachable: text.length > 200,\n    site_title: title,\n    site_description: description,\n    site_text: text,\n  },\n}];"
+      },
+      "id": "9190030b-de6d-4f6a-86bf-224c20b22054",
+      "name": "Extract Website Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the LLM request. Every provider is forced into the same JSON schema, so downstream nodes never change.\nconst lead = $input.first().json;\n\nconst system = `You are a senior SDR qualifying inbound demo requests for Vantora, a revenue-intelligence platform for B2B sales teams.\n\nIdeal customer profile (ICP):\n- B2B SaaS or technology companies with 51 to 5,000 employees\n- Buyer roles: CRO, VP/Head/Director of Sales, Revenue Operations, Sales Operations; founders/CEOs at companies under 200 people\n- Already on a CRM (Salesforce or HubSpot is the strongest fit)\n- Buying timeline within the current quarter\n\nNegative signals: personal/free email domains, students or job seekers, agencies pitching services, B2C or local brick-and-mortar businesses, companies under 10 employees, email domain not matching the company website.\n\nScoring rubric: 70-100 = Hot (route to sales now), 40-69 = Warm (nurture), 0-39 = Cold (disqualify). The tier must match the score.\n\nScore strictly and ground every claim in the provided data. If the website could not be read, say so and rely on the form data only. Never invent facts about the company.`;\n\nconst user = `Qualify this inbound lead.\n\nFORM SUBMISSION\n- Name: ${lead.full_name}\n- Job title: ${lead.job_title}\n- Work email: ${lead.email} (free email provider: ${lead.is_free_email}; domain matches website: ${lead.domain_matches_website})\n- Company: ${lead.company}\n- Website: ${lead.website}\n- Company size (self-reported): ${lead.company_size}\n- Current CRM: ${lead.crm}\n- Timeline: ${lead.timeline}\n- What they want to solve: ${lead.message || '(left blank)'}\n\nCOMPANY WEBSITE (${lead.website_reachable ? 'fetched successfully' : 'COULD NOT BE READ'})\n- Title: ${lead.site_title || 'n/a'}\n- Meta description: ${lead.site_description || 'n/a'}\n- Homepage text: ${lead.site_text || 'n/a'}\n\nAlso draft a short, personal first-touch email from \"Alex Morgan, Solutions Engineer at Vantora\" that references one specific detail about their company or goal. Under 120 words, plain text, no placeholders, end by proposing two time slots this week.`;\n\nconst schema = {\n  type: 'object',\n  properties: {\n    icp_score: { type: 'integer', minimum: 0, maximum: 100, description: 'Overall fit with the ICP, 0-100' },\n    tier: { type: 'string', enum: ['Hot', 'Warm', 'Cold'] },\n    fit_summary: { type: 'string', description: 'One sentence explaining the score' },\n    industry: { type: 'string' },\n    business_model: { type: 'string', enum: ['B2B', 'B2C', 'B2B2C', 'Unknown'] },\n    buying_signals: { type: 'array', items: { type: 'string' }, maxItems: 4 },\n    risks: { type: 'array', items: { type: 'string' }, maxItems: 4 },\n    recommended_action: { type: 'string', description: 'Next step for the sales team' },\n    email_subject: { type: 'string' },\n    email_body: { type: 'string' },\n  },\n  required: ['icp_score', 'tier', 'fit_summary', 'industry', 'business_model', 'buying_signals', 'risks', 'recommended_action', 'email_subject', 'email_body'],\n};\n\nconst TARGETS = {\n  primary: { provider: 'gemini', model: 'gemini-flash-lite-latest' },\n  fallback: { provider: 'groq', model: 'openai/gpt-oss-120b' },\n};\n// Remove schema keywords a provider's structured-output dialect doesn't accept.\nconst strip = (obj, keys) => JSON.parse(JSON.stringify(obj, (k, v) => (keys.includes(k) ? undefined : v)));\n\nfunction bodyFor({ provider, model }) {\n  if (provider === 'gemini') {\n    return {\n      systemInstruction: { parts: [{ text: system }] },\n      contents: [{ role: 'user', parts: [{ text: user }] }],\n      generationConfig: {\n        temperature: 0.2,\n        maxOutputTokens: 8192,\n        responseMimeType: 'application/json',\n        // Gemini's OpenAPI-style schema: uppercase type names, no numeric bounds.\n        responseSchema: JSON.parse(JSON.stringify(strip(schema, ['minimum', 'maximum']),\n          (k, v) => (k === 'type' && typeof v === 'string' ? v.toUpperCase() : v))),\n      },\n    };\n  }\n  if (provider === 'openai') {\n    return {\n      model,\n      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],\n      response_format: {\n        type: 'json_schema',\n        json_schema: { name: 'score_lead', strict: true, schema: { ...strip(schema, ['minimum', 'maximum', 'maxItems']), additionalProperties: false } },\n      },\n    };\n  }\n  if (provider === 'groq') {\n    // JSON mode works across every Groq model; the schema travels in the system prompt.\n    return {\n      model,\n      temperature: 0.2,\n      max_completion_tokens: 2048,\n      messages: [\n        { role: 'system', content: `${system}\\n\\nRespond with one JSON object only, matching this JSON schema exactly:\\n${JSON.stringify(schema)}` },\n        { role: 'user', content: user },\n      ],\n      response_format: { type: 'json_object' },\n    };\n  }\n  return {\n    model,\n    max_tokens: 1500,\n    system,\n    messages: [{ role: 'user', content: user }],\n    tools: [{ name: 'score_lead', description: 'Record the qualification result for this inbound lead.', input_schema: schema }],\n    tool_choice: { type: 'tool', name: 'score_lead' },\n  };\n}\n\nreturn [{ json: { ...lead, request_body: bodyFor(TARGETS.primary), fallback_body: bodyFor(TARGETS.fallback) } }];"
+      },
+      "id": "14871549-64f0-4b03-980f-93b16b78f518",
+      "name": "Build AI Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build AI Request').first().json.request_body) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "c8280d3f-c0a8-4116-9871-8c28c2cd227f",
+      "name": "Gemini · Score Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Header Auth: name x-goog-api-key, value = your AI Studio key",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Build AI Request').first().json.fallback_body) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "46b62bdb-5f0e-42fd-aaef-4c34a7de9701",
+      "name": "Groq · Fallback Model",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        520
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Bearer Auth: token = your Groq API key (console.groq.com)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize whichever provider answered (primary or fallback) and merge the verdict onto the lead.\nconst lead = $('Build AI Request').first().json;\nconst res = $input.first().json;\n\nlet s, provider, model, inputTokens = 0, outputTokens = 0;\nif (res.candidates) {\n  const cand = res.candidates[0];\n  const text = (cand?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? '').join('');\n  if (!text) throw new Error(`Gemini returned no content (reason: ${cand?.finishReason ?? res.promptFeedback?.blockReason ?? 'unknown'})`);\n  s = JSON.parse(text);\n  provider = 'gemini';\n  model = res.modelVersion;\n  inputTokens = res.usageMetadata?.promptTokenCount ?? 0;\n  outputTokens = res.usageMetadata?.candidatesTokenCount ?? 0;\n} else if (res.choices) {\n  const text = res.choices[0]?.message?.content;\n  if (!text) throw new Error(`Model returned no content (finish_reason: ${res.choices[0]?.finish_reason})`);\n  s = JSON.parse(text);\n  provider = res.x_groq ? 'groq' : 'openai';\n  model = res.model;\n  inputTokens = res.usage?.prompt_tokens ?? 0;\n  outputTokens = res.usage?.completion_tokens ?? 0;\n} else {\n  const call = (res.content ?? []).find((c) => c.type === 'tool_use' && c.name === 'score_lead');\n  if (!call) throw new Error(`Claude returned no score_lead tool call (stop_reason: ${res.stop_reason})`);\n  s = call.input;\n  provider = 'anthropic';\n  model = res.model;\n  inputTokens = res.usage?.input_tokens ?? 0;\n  outputTokens = res.usage?.output_tokens ?? 0;\n}\n\nconst { request_body, fallback_body, site_text, ...rest } = lead;\nconst score = Math.max(0, Math.min(100, Math.round(Number(s.icp_score) || 0)));\nconst list = (v) => (Array.isArray(v) ? v.join('; ') : String(v ?? ''));\n\nreturn [{\n  json: {\n    ...rest,\n    icp_score: score,\n    tier: score >= 70 ? 'Hot' : score >= 40 ? 'Warm' : 'Cold',  // routing threshold is the source of truth\n    fit_summary: s.fit_summary,\n    industry: s.industry,\n    business_model: s.business_model,\n    buying_signals: list(s.buying_signals),\n    risks: list(s.risks),\n    recommended_action: s.recommended_action,\n    email_subject: s.email_subject,\n    email_body: s.email_body,\n    llm_provider: provider,\n    model,\n    input_tokens: inputTokens,\n    output_tokens: outputTokens,\n    scored_at: new Date().toISOString(),\n  },\n}];"
+      },
+      "id": "b1700e5b-6ca9-465f-b4ee-ec6e4487d2fa",
+      "name": "Parse AI Verdict",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "7e5f96a4-0b1c-45f2-968f-6631ccb3be37",
+              "leftValue": "={{ $json.icp_score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "821026de-2236-4f8a-9a5f-82ce89c74521",
+      "name": "ICP Score ≥ 70?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ptu8lmNgfvG2bHISGSuv4GwFNxQkgWH3yEFNJ39xSN4",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Hot Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $json.lead_id }}",
+            "Submitted At": "={{ $json.submitted_at }}",
+            "Name": "={{ $json.full_name }}",
+            "Email": "={{ $json.email }}",
+            "Job Title": "={{ $json.job_title }}",
+            "Company": "={{ $json.company }}",
+            "Website": "={{ $json.website }}",
+            "Company Size": "={{ $json.company_size }}",
+            "CRM": "={{ $json.crm }}",
+            "Timeline": "={{ $json.timeline }}",
+            "ICP Score": "={{ $json.icp_score }}",
+            "Tier": "={{ $json.tier }}",
+            "Industry": "={{ $json.industry }}",
+            "Fit Summary": "={{ $json.fit_summary }}",
+            "Buying Signals": "={{ $json.buying_signals }}",
+            "Risks": "={{ $json.risks }}",
+            "Recommended Action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted At",
+              "displayName": "Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CRM",
+              "displayName": "CRM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ICP Score",
+              "displayName": "ICP Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tier",
+              "displayName": "Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fit Summary",
+              "displayName": "Fit Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buying Signals",
+              "displayName": "Buying Signals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risks",
+              "displayName": "Risks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "34bad60e-bf1c-4533-a559-ee0bbfd043ba",
+      "name": "CRM · Add Hot Lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_body }}",
+        "options": {
+          "sendTo": "={{ $json.email }}"
+        }
+      },
+      "id": "1475340e-12da-465d-a0a0-0c685dff0931",
+      "name": "Gmail · Draft Outreach",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2400,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ptu8lmNgfvG2bHISGSuv4GwFNxQkgWH3yEFNJ39xSN4",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Nurture",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead ID": "={{ $json.lead_id }}",
+            "Submitted At": "={{ $json.submitted_at }}",
+            "Name": "={{ $json.full_name }}",
+            "Email": "={{ $json.email }}",
+            "Job Title": "={{ $json.job_title }}",
+            "Company": "={{ $json.company }}",
+            "Website": "={{ $json.website }}",
+            "Company Size": "={{ $json.company_size }}",
+            "CRM": "={{ $json.crm }}",
+            "Timeline": "={{ $json.timeline }}",
+            "ICP Score": "={{ $json.icp_score }}",
+            "Tier": "={{ $json.tier }}",
+            "Industry": "={{ $json.industry }}",
+            "Fit Summary": "={{ $json.fit_summary }}",
+            "Buying Signals": "={{ $json.buying_signals }}",
+            "Risks": "={{ $json.risks }}",
+            "Recommended Action": "={{ $json.recommended_action }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted At",
+              "displayName": "Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Job Title",
+              "displayName": "Job Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CRM",
+              "displayName": "CRM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ICP Score",
+              "displayName": "ICP Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tier",
+              "displayName": "Tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fit Summary",
+              "displayName": "Fit Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Buying Signals",
+              "displayName": "Buying Signals",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Risks",
+              "displayName": "Risks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "58b22de0-852a-4c62-93d2-380f7671cdba",
+      "name": "Nurture List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        680
+      ]
+    }
+  ],
+  "connections": {
+    "Demo Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Payload Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload Valid?": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 · Received",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 · Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200 · Received": {
+      "main": [
+        [
+          {
+            "node": "Fetch Company Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Company Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Website Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Website Text": {
+      "main": [
+        [
+          {
+            "node": "Build AI Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Request": {
+      "main": [
+        [
+          {
+            "node": "Gemini · Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini · Score Lead": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Groq · Fallback Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq · Fallback Model": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Verdict": {
+      "main": [
+        [
+          {
+            "node": "ICP Score ≥ 70?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ICP Score ≥ 70?": {
+      "main": [
+        [
+          {
+            "node": "CRM · Add Hot Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail · Draft Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nurture List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "errorWorkflow": "VntErrorHandler1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

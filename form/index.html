@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Book a Demo · Vantora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0f172a;
+      --ink-2: #334155;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --brand: #4f46e5;
+      --brand-dark: #4338ca;
+      --brand-soft: #eef2ff;
+      --panel: #0b1020;
+      --panel-2: #141a31;
+      --ok: #059669;
+      --ok-soft: #ecfdf5;
+      --err: #dc2626;
+      --err-soft: #fef2f2;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "cv11", "ss01";
+    }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; background: var(--panel); color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+    .logo-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, #818cf8 0%, #4f46e5 55%, #312e81 100%);
+      display: grid; place-items: center;
+    }
+    .topbar nav { display: flex; gap: 28px; font-size: 14px; color: #cbd5e1; }
+    .topbar nav a { color: inherit; text-decoration: none; }
+    .topbar nav a:hover { color: #fff; }
+
+    /* ---------- Layout ---------- */
+    .shell { display: grid; grid-template-columns: 1fr 1.05fr; min-height: calc(100vh - 65px); }
+
+    .pitch {
+      background: radial-gradient(1200px 600px at -10% -20%, #1e1b4b 0%, transparent 60%), var(--panel);
+      color: #e2e8f0; padding: 64px 56px; display: flex; flex-direction: column; gap: 40px;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; color: #a5b4fc;
+      background: rgba(129,140,248,.1); border: 1px solid rgba(129,140,248,.25);
+      padding: 6px 12px; border-radius: 999px; width: fit-content;
+    }
+    .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.2); }
+    .pitch h1 { font-size: 40px; line-height: 1.12; letter-spacing: -.025em; margin: 16px 0 14px; color: #fff; font-weight: 700; }
+    .pitch h1 span { color: #a5b4fc; }
+    .pitch .lede { font-size: 16px; line-height: 1.6; color: #94a3b8; max-width: 460px; margin: 0; }
+
+    .benefits { list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; }
+    .benefits li { display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start; }
+    .benefits .ico {
+      width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center;
+      background: rgba(129,140,248,.12); border: 1px solid rgba(129,140,248,.2); color: #a5b4fc;
+    }
+    .benefits strong { display: block; color: #f1f5f9; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .benefits span { font-size: 14px; color: #94a3b8; line-height: 1.5; }
+
+    .quote {
+      background: var(--panel-2); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 22px 24px;
+    }
+    .quote p { margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #e2e8f0; }
+    .quote .who { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+      background: linear-gradient(135deg, #f472b6, #8b5cf6); color: #fff; font-weight: 600; font-size: 13px;
+    }
+    .who b { display: block; color: #f1f5f9; font-weight: 600; }
+    .who small { color: #94a3b8; font-size: 12.5px; }
+
+    .logos { margin-top: auto; }
+    .logos p { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; margin: 0 0 14px; font-weight: 600; }
+    .logos div { display: flex; flex-wrap: wrap; gap: 28px; align-items: center; color: #64748b; font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+    .logos .serif { font-family: Georgia, serif; font-style: italic; font-weight: 600; }
+    .logos .mono { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 15px; }
+
+    /* ---------- Form side ---------- */
+    .form-side { padding: 56px 56px 48px; display: flex; justify-content: center; align-items: flex-start; }
+    .card {
+      width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 16px; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 12px 32px -12px rgba(15,23,42,.12);
+      padding: 36px 36px 28px;
+    }
+    .card h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.015em; font-weight: 700; }
+    .card .sub { margin: 0 0 26px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 14px; }
+    .full { grid-column: 1 / -1; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+    .field label .opt { font-weight: 400; color: var(--muted); }
+    .field input, .field select, .field textarea {
+      width: 100%; font: inherit; font-size: 14.5px; color: var(--ink);
+      background: #fff; border: 1px solid var(--line-strong); border-radius: 8px;
+      padding: 10px 12px; transition: border-color .15s, box-shadow .15s; outline: none;
+    }
+    .field textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
+    .field select {
+      appearance: none; padding-right: 36px; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .field select:invalid { color: #94a3b8; }
+    .field input::placeholder, .field textarea::placeholder { color: #94a3b8; }
+    .field input:hover, .field select:hover, .field textarea:hover { border-color: #94a3b8; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,.15); }
+    .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--err); box-shadow: 0 0 0 3px rgba(220,38,38,.1); }
+    .field .msg { display: none; font-size: 12.5px; color: var(--err); margin-top: 5px; }
+    .field.invalid .msg { display: block; }
+
+    .input-prefix { display: flex; }
+    .input-prefix span {
+      display: flex; align-items: center; padding: 0 10px; font-size: 14px; color: var(--muted);
+      background: var(--bg); border: 1px solid var(--line-strong); border-right: 0; border-radius: 8px 0 0 8px;
+    }
+    .input-prefix input { border-radius: 0 8px 8px 0; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .chip span {
+      display: inline-block; padding: 7px 12px; font-size: 13px; font-weight: 500; color: var(--ink-2);
+      border: 1px solid var(--line-strong); border-radius: 999px; cursor: pointer; transition: all .15s; user-select: none;
+    }
+    .chip span:hover { border-color: #94a3b8; }
+    .chip input:checked + span { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-dark); }
+    .chip input:focus-visible + span { box-shadow: 0 0 0 3px rgba(79,70,229,.2); }
+
+    .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+    .consent input { margin-top: 3px; accent-color: var(--brand); width: 16px; height: 16px; flex: none; }
+    .consent a { color: var(--brand); text-decoration: none; }
+
+    .btn {
+      width: 100%; margin-top: 22px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      font: inherit; font-weight: 600; font-size: 15px; color: #fff; background: var(--brand);
+      border: 0; border-radius: 9px; padding: 13px 18px; cursor: pointer; transition: background .15s, transform .05s;
+      box-shadow: 0 1px 2px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .btn:hover { background: var(--brand-dark); }
+    .btn:active { transform: translateY(1px); }
+    .btn[disabled] { opacity: .75; cursor: progress; }
+    .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; animation: spin .7s linear infinite; display: none; }
+    .btn.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .fineprint { display: flex; justify-content: center; gap: 18px; margin-top: 16px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+    .fineprint span { display: inline-flex; align-items: center; gap: 6px; }
+
+    .banner { display: none; margin-bottom: 18px; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.5; }
+    .banner.error { display: block; background: var(--err-soft); color: #991b1b; border: 1px solid #fecaca; }
+
+    /* ---------- Success state ---------- */
+    .success { display: none; text-align: center; padding: 20px 8px 8px; }
+    .success .check {
+      width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center;
+      background: var(--ok-soft); color: var(--ok); animation: pop .35s cubic-bezier(.2,.9,.3,1.3);
+    }
+    @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .success h2 { margin-bottom: 8px; }
+    .success p { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0 auto 22px; max-width: 400px; }
+    .steps { text-align: left; border: 1px solid var(--line); border-radius: 12px; padding: 6px 18px; margin-bottom: 20px; }
+    .steps div { display: flex; gap: 12px; align-items: center; padding: 12px 0; font-size: 14px; color: var(--ink-2); }
+    .steps div + div { border-top: 1px solid var(--line); }
+    .steps b { width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--brand-soft); color: var(--brand-dark); font-size: 12px; display: grid; place-items: center; }
+    .ref { font-size: 12.5px; color: var(--muted); }
+    .ref code { font-family: ui-monospace, Consolas, monospace; background: var(--bg); border: 1px solid var(--line); padding: 2px 6px; border-radius: 5px; color: var(--ink-2); }
+    .link-btn { background: none; border: 0; color: var(--brand); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; margin-top: 14px; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1080px) {
+      .shell { grid-template-columns: 1fr; }
+      .pitch { padding: 44px 32px; }
+      .logos { margin-top: 0; }
+      .form-side { padding: 32px 16px 48px; }
+      .topbar nav { display: none; }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 16px; }
+      .pitch { padding: 36px 16px; }
+      .pitch h1 { font-size: 30px; }
+      .card { padding: 26px 18px 22px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 6 12 18 20 6"/></svg>
+      </div>
+      Vantora
+    </div>
+    <nav>
+      <a href="#">Product</a><a href="#">Solutions</a><a href="#">Customers</a><a href="#">Pricing</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <!-- ================= Left: pitch ================= -->
+    <section class="pitch">
+      <div>
+        <div class="eyebrow">Live demo · 30 minutes</div>
+        <h1>See your pipeline the way your <span>best rep</span> sees it.</h1>
+        <p class="lede">Vantora unifies CRM, product usage and conversation data into one revenue workspace, so your team knows which deals to chase and why.</p>
+      </div>
+
+      <ul class="benefits">
+        <li>
+          <div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/></svg></div>
+          <div><strong>Forecast with confidence</strong><span>Deal-level risk signals built from real buyer activity, not rep gut feel.</span></div>
+        </li>
+        <li>
+          <div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><strong>Live in under two weeks</strong><span>Native connectors for Salesforce, HubSpot, Gong and your warehouse.</span></div>
+        </li>
+        <li>
+          <div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+          <div><strong>Enterprise-grade security</strong><span>SOC 2 Type II, SSO/SAML and regional data residency.</span></div>
+        </li>
+      </ul>
+
+      <figure class="quote" style="margin:0">
+        <p>“We replaced three spreadsheets and a weekly forecast call. Our team now spends that time with customers.”</p>
+        <figcaption class="who">
+          <div class="avatar">MR</div>
+          <div><b>Maya Reyes</b><small>VP Revenue Operations, Brightloop</small></div>
+        </figcaption>
+      </figure>
+
+      <div class="logos">
+        <p>Trusted by 400+ revenue teams</p>
+        <div>
+          <span>brightloop</span><span class="serif">Halden&amp;Co</span><span class="mono">NORTHPEAK</span><span>quillstack</span><span class="serif">Orravi</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Right: form ================= -->
+    <section class="form-side">
+      <div class="card">
+        <form id="demo-form" novalidate>
+          <h2>Book your personalized demo</h2>
+          <p class="sub">Tell us a little about your team. A solutions engineer will tailor the session to your stack and goals.</p>
+
+          <div class="banner" id="banner" role="alert"></div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="first_name">First name</label>
+              <input id="first_name" name="first_name" autocomplete="given-name" placeholder="Jordan" required />
+              <div class="msg">Please enter your first name.</div>
+            </div>
+            <div class="field">
+              <label for="last_name">Last name</label>
+              <input id="last_name" name="last_name" autocomplete="family-name" placeholder="Ellis" required />
+              <div class="msg">Please enter your last name.</div>
+            </div>
+
+            <div class="field full">
+              <label for="email">Work email</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="jordan@company.com" required />
+              <div class="msg">Please enter a valid work email.</div>
+            </div>
+
+            <div class="field">
+              <label for="company">Company name</label>
+              <input id="company" name="company" autocomplete="organization" placeholder="Acme Inc." required />
+              <div class="msg">Please enter your company name.</div>
+            </div>
+            <div class="field">
+              <label for="website">Company website</label>
+              <div class="input-prefix">
+                <span>https://</span>
+                <input id="website" name="website" placeholder="acme.com" required />
+              </div>
+              <div class="msg">Please enter a valid domain, e.g. acme.com</div>
+            </div>
+
+            <div class="field">
+              <label for="job_title">Job title</label>
+              <input id="job_title" name="job_title" autocomplete="organization-title" placeholder="Head of Sales" required />
+              <div class="msg">Please enter your job title.</div>
+            </div>
+            <div class="field">
+              <label for="company_size">Company size</label>
+              <select id="company_size" name="company_size" required>
+                <option value="" disabled selected>Select…</option>
+                <option>1–10</option>
+                <option>11–50</option>
+                <option>51–200</option>
+                <option>201–1,000</option>
+                <option>1,001–5,000</option>
+                <option>5,000+</option>
+              </select>
+              <div class="msg">Please select your company size.</div>
+            </div>
+
+            <div class="field full">
+              <label>Current CRM</label>
+              <div class="chips" id="crm">
+                <label class="chip"><input type="radio" name="crm" value="Salesforce" /><span>Salesforce</span></label>
+                <label class="chip"><input type="radio" name="crm" value="HubSpot" /><span>HubSpot</span></label>
+                <label class="chip"><input type="radio" name="crm" value="Pipedrive" /><span>Pipedrive</span></label>
+                <label class="chip"><input type="radio" name="crm" value="Other" /><span>Other</span></label>
+                <label class="chip"><input type="radio" name="crm" value="None yet" /><span>None yet</span></label>
+              </div>
+            </div>
+
+            <div class="field full">
+              <label for="timeline">When are you looking to get started?</label>
+              <select id="timeline" name="timeline" required>
+                <option value="" disabled selected>Select a timeline…</option>
+                <option>Immediately (this month)</option>
+                <option>This quarter</option>
+                <option>Next 3–6 months</option>
+                <option>Just exploring</option>
+              </select>
+              <div class="msg">Please select a timeline.</div>
+            </div>
+
+            <div class="field full">
+              <label for="message">What would you like to solve? <span class="opt">(optional)</span></label>
+              <textarea id="message" name="message" placeholder="e.g. Our forecast is off by 20% every quarter and reps live in spreadsheets."></textarea>
+            </div>
+
+            <div class="field full">
+              <label class="consent">
+                <input type="checkbox" id="consent" name="consent" required />
+                <span>I agree to Vantora contacting me about this request. See our <a href="#">Privacy Policy</a>.</span>
+              </label>
+              <div class="msg">Please accept to continue.</div>
+            </div>
+          </div>
+
+          <button class="btn" type="submit" id="submit">
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="label">Request my demo</span>
+          </button>
+
+          <div class="fineprint">
+            <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Reply within 1 business day</span>
+            <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No credit card required</span>
+          </div>
+        </form>
+
+        <!-- Success state -->
+        <div class="success" id="success" aria-live="polite">
+          <div class="check">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2>Thanks, <span id="success-name">there</span>. You're all set.</h2>
+          <p>We've received your request and matched it to the right specialist on our team. Here's what happens next:</p>
+          <div class="steps">
+            <div><b>1</b>A confirmation email is on its way to <strong id="success-email"></strong></div>
+            <div><b>2</b>A solutions engineer reviews your stack and goals</div>
+            <div><b>3</b>You'll get a calendar link for a 30-minute tailored demo</div>
+          </div>
+          <div class="ref">Reference ID <code id="ref-id"></code></div>
+          <button class="link-btn" id="reset" type="button">Submit another request</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Where the form posts. Override with ?webhook=https://your-n8n/webhook/lead-intake
+    const WEBHOOK_URL =
+      new URLSearchParams(location.search).get("webhook") ||
+      "http://localhost:5678/webhook/lead-intake";
+
+    const form = document.getElementById("demo-form");
+    const btn = document.getElementById("submit");
+    const banner = document.getElementById("banner");
+
+    const DOMAIN_RE = /^(?!-)([a-z0-9-]{1,63}\.)+[a-z]{2,}$/i;
+
+    function cleanDomain(v) {
+      return v.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/.*$/, "").toLowerCase();
+    }
+
+    function validate() {
+      let firstInvalid = null;
+      form.querySelectorAll(".field").forEach((field) => {
+        const el = field.querySelector("input:not([type=radio]), select, textarea");
+        if (!el || !el.required) return;
+        let ok = el.type === "checkbox" ? el.checked : el.value.trim() !== "";
+        if (ok && el.type === "email") ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+        if (ok && el.id === "website") ok = DOMAIN_RE.test(cleanDomain(el.value));
+        field.classList.toggle("invalid", !ok);
+        if (!ok && !firstInvalid) firstInvalid = el;
+      });
+      if (firstInvalid) firstInvalid.focus();
+      return !firstInvalid;
+    }
+
+    // Clear a field's error as soon as the user fixes it
+    form.addEventListener("input", (e) => e.target.closest(".field")?.classList.remove("invalid"));
+    form.addEventListener("change", (e) => e.target.closest(".field")?.classList.remove("invalid"));
+
+    function setLoading(on) {
+      btn.disabled = on;
+      btn.classList.toggle("loading", on);
+      btn.querySelector(".label").textContent = on ? "Submitting…" : "Request my demo";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      banner.className = "banner";
+      if (!validate()) return;
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      const payload = {
+        first_name: data.first_name.trim(),
+        last_name: data.last_name.trim(),
+        email: data.email.trim().toLowerCase(),
+        company: data.company.trim(),
+        website: cleanDomain(data.website),
+        job_title: data.job_title.trim(),
+        company_size: data.company_size,
+        crm: data.crm || "Not specified",
+        timeline: data.timeline,
+        message: (data.message || "").trim(),
+        consent: true,
+        source: "website_demo_form",
+        page_url: location.href.split("?")[0],
+        submitted_at: new Date().toISOString(),
+      };
+
+      setLoading(true);
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const body = await res.json().catch(() => ({}));
+        showSuccess(payload, body.lead_id);
+      } catch (err) {
+        console.error(err);
+        banner.className = "banner error";
+        banner.textContent = "We couldn't submit your request right now. Please try again in a moment.";
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function showSuccess(p, leadId) {
+      document.getElementById("success-name").textContent = p.first_name;
+      document.getElementById("success-email").textContent = p.email;
+      document.getElementById("ref-id").textContent = leadId || "VNT-" + Date.now().toString(36).toUpperCase();
+      form.style.display = "none";
+      document.getElementById("success").style.display = "block";
+    }
+
+    document.getElementById("reset").addEventListener("click", () => {
+      form.reset();
+      document.getElementById("success").style.display = "none";
+      form.style.display = "block";
+    });
+  </script>
+</body>
+</html>

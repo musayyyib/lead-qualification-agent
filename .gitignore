@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs & local scratch
+*.log
+logs/
+*.local
+
+# n8n local data (lives in the Docker volume, never in the repo)
+.n8n/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json

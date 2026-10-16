@@ -1,0 +1,94 @@
+{
+  "id": "VntErrorHandler1",
+  "name": "Vantora · Error Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Error handler\nAny failure in the lead workflow emails an alert with the failing node, error and execution link.",
+        "width": 700,
+        "height": 380,
+        "color": 3
+      },
+      "id": "d0976084-c9f2-4651-8522-37800516ac72",
+      "name": "Note cac4c1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3cf2ab93-7894-4522-a9ea-744ab5a22001",
+      "name": "On Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Shape the n8n error payload into a readable alert email.\nconst e = $input.first().json;\nconst exec = e.execution ?? {};\nconst wf = e.workflow ?? {};\nreturn [{\n  json: {\n    subject: `[Alert] ${wf.name ?? 'Workflow'} failed at \"${exec.lastNodeExecuted ?? 'unknown node'}\"`,\n    body: [\n      `Workflow:  ${wf.name ?? 'unknown'}`,\n      `Failed at: ${exec.lastNodeExecuted ?? 'n/a'}`,\n      `Error:     ${exec.error?.message ?? 'n/a'}`,\n      `Execution: ${exec.url ?? exec.id ?? 'n/a'}`,\n      `Time:      ${new Date().toISOString()}`,\n      '',\n      'The lead was received and stored in the execution log; re-run it from n8n once the issue is fixed.',\n    ].join('\\n'),\n  },\n}];"
+      },
+      "id": "69b9cd14-ae8e-4192-866d-725d21bfa106",
+      "name": "Format Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "musayyib.ahmed@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "10d93b9f-3354-4f2e-b5eb-640a582b75d3",
+      "name": "Gmail · Email Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Format Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert": {
+      "main": [
+        [
+          {
+            "node": "Gmail · Email Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
